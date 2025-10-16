@@ -5,7 +5,6 @@
  * @author sooyaaabo
  */
 
-
 // --- 配置键 ---
 // 存储 App ID 列表的键名
 // 示例：444934666,414478124,930368978
@@ -80,7 +79,7 @@ async function main() {
   }
 
   console.log(
-    `查询区域顺序: ${regions.join('→').toUpperCase()}${usingCustomRegions ? ' (自定义)' : ' (默认)'}`
+    `查询区域顺序: GLOBAL→${regions.join('→').toUpperCase()}${usingCustomRegions ? ' (自定义)' : ' (默认)'}`
   );
   console.log(`开始检测 ${newIds.length} 个应用更新...`);
 
@@ -146,19 +145,20 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
   let appInfo = null;
   let regionUsed = '';
 
-  const searchOrder = regions;
+  // 先尝试无区域（global），再按 regions 顺序尝试
+  const searchOrder = ['', ...regions];
 
   for (const region of searchOrder) {
     appInfo = await lookupApp(region, appId);
     if (appInfo) {
-      regionUsed = region;
+      regionUsed = region || 'global';
       break;
     }
   }
 
   if (!appInfo) {
     logs.notFound.push(
-      `[${appId}] 在 ${regions.join(', ').toUpperCase()} 均未找到，请检查AppID是否错误或者请添加新的区域。`
+      `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查AppID是否错误或者请添加新的区域。`
     );
     return;
   }
@@ -194,7 +194,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
   if (!storedVersion || compareVersions(newVersion, storedVersion) > 0) {
     monitoredData[appId] = {
       version: newVersion,
-      region: regionUsed,
+      region: regionUsed === 'global' ? '' : regionUsed,
       name: appName,
     };
 
@@ -205,7 +205,10 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
       })
       .replace(/\//g, '-');
 
-    const openUrl = `https://apps.apple.com/${regionUsed}/app/id${appId}`;
+    const openUrl = regionUsed === 'global'
+      ? `itms-apps://itunes.apple.com/app/id${appId}`
+      : `itms-apps://itunes.apple.com/${regionUsed}/app/id${appId}`;
+
     let title, subtitle, body;
 
     if (storedVersion) {
@@ -223,7 +226,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
     // 兜底：确保新 App 被记录
     monitoredData[appId] = {
       version: newVersion,
-      region: regionUsed,
+      region: regionUsed === 'global' ? '' : regionUsed,
       name: appName,
     };
   }
@@ -231,7 +234,10 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
 
 function lookupApp(region, appId) {
   return new Promise(resolve => {
-    const url = `https://itunes.apple.com/${region}/lookup?id=${appId}`;
+    const url = region
+      ? `https://itunes.apple.com/${region}/lookup?id=${appId}`
+      : `https://itunes.apple.com/lookup?id=${appId}`;
+
     const headers = {
       'User-Agent':
         'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
