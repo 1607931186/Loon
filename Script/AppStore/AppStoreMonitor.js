@@ -62,7 +62,7 @@ async function main() {
   handleDeletions(newIds, monitoredData);
 
   // 2. 检查应用更新
-  const defaultRegions = ['us', 'cn', 'hk', 'mo', 'tw', 'jp', 'kr', 'sg', 'tr'];
+  const defaultRegions = ['us', 'ca', 'jp', 'kr', 'sg', 'hk', 'mo', 'tw', 'tr', 'cn'];
   let regions = defaultRegions;
   const customRegionsRaw = $persistentStore.read(REGIONS_KEY);
   let usingCustomRegions = false;
