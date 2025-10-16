@@ -217,7 +217,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
       body = `更新时间：${formattedDate}\n更新内容：\n${releaseNotes}`;
     } else {
       title = `「${appName}」已添加监控`;
-      subtitle = `区域：${regionUsed.toUpperCase()}　当前版本：${newVersion}`;
+      subtitle = `区域：${regionUsed.toUpperCase()}　版本：${newVersion}`;
       body = `更新时间：${formattedDate}\n将从此版本开始监控更新。`;
     }
 
