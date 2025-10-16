@@ -1,0 +1,19 @@
+#!name = AppStore Monitor
+#!desc = 定时监测App Store内App的更新状态\n可输入多个AppID，可自定义查询区域顺序（不填则为默认顺序），均以逗号分隔。
+#!author = sooyaaabo[https://github.com/sooyaaabo]
+#!tag = 功能增强
+#!system = 
+#!system_version = 
+#!loon_version = 3.3.5(904)
+#!homepage = https://github.com/sooyaaabo/Loon/blob/Loon/README.md
+#!icon = https://raw.githubusercontent.com/sooyaaabo/Loon/main/Icon/App-Icon/AppStore-01.png
+#!input = AppStore_AppID
+#!input = AppStore_Region
+#!date = 2025-10-16 00:00
+
+[Argument]
+JS-enable = switch, true, false, tag = App Store更新监测, desc = 是否开启App Store更新监测
+RunCron = input, "0 * * * *", tag = App Store更新监测定时参数, desc = 输入Cron表达式来定时运行
+
+[Script]
+cron {RunCron} script-path = https://raw.githubusercontent.com/sooyaaabo/Loon/main/Script/AppStore/AppStoreMonitor.js, tag = AppStore Monitor, enable={JS-enable}
