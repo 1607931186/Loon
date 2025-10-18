@@ -4661,6 +4661,7 @@ DOMAIN-SUFFIX, bnef.com
 DOMAIN-SUFFIX, bnext.com.tw
 DOMAIN-SUFFIX, bnn.co
 DOMAIN-SUFFIX, bnrmetal.com
+DOMAIN-SUFFIX, bntrace.com
 DOMAIN-SUFFIX, bnu.ac.uk
 DOMAIN-SUFFIX, boa.ac.uk
 DOMAIN-SUFFIX, boardreader.com
@@ -5890,6 +5891,7 @@ DOMAIN-SUFFIX, cepacol.com
 DOMAIN-SUFFIX, ceramics-cadcam.com
 DOMAIN-SUFFIX, cercia.ac.uk
 DOMAIN-SUFFIX, cerdas.com
+DOMAIN-SUFFIX, cerebras.ai
 DOMAIN-SUFFIX, ceredigion.ac.uk
 DOMAIN-SUFFIX, ceri.ac.uk
 DOMAIN-SUFFIX, cerlim.ac.uk
@@ -6390,6 +6392,8 @@ DOMAIN-SUFFIX, classicnike.com
 DOMAIN-SUFFIX, classics.ac.uk
 DOMAIN-SUFFIX, classymomsex.com
 DOMAIN-SUFFIX, claude.ai
+DOMAIN-SUFFIX, claude.com
+DOMAIN-SUFFIX, claudemcpclient.com
 DOMAIN-SUFFIX, claudeusercontent.com
 DOMAIN-SUFFIX, clb.org.hk
 DOMAIN-SUFFIX, clc-london.ac.uk
@@ -15103,6 +15107,7 @@ DOMAIN-SUFFIX, jasper.ai
 DOMAIN-SUFFIX, jav-angel.net
 DOMAIN-SUFFIX, jav-subtitles.com
 DOMAIN-SUFFIX, jav-vr.net
+DOMAIN-SUFFIX, jav.app
 DOMAIN-SUFFIX, jav.com
 DOMAIN-SUFFIX, jav.dog
 DOMAIN-SUFFIX, jav.gallery
@@ -17115,6 +17120,7 @@ DOMAIN-SUFFIX, marlab.ac.uk
 DOMAIN-SUFFIX, marlin.ac.uk
 DOMAIN-SUFFIX, marplecollege.ac.uk
 DOMAIN-SUFFIX, marranazas.com
+DOMAIN-SUFFIX, marscode.com
 DOMAIN-SUFFIX, martau.com
 DOMAIN-SUFFIX, martsangkagyuofficial.org
 DOMAIN-SUFFIX, maruta.be
@@ -19455,6 +19461,7 @@ DOMAIN-SUFFIX, nfsc.global
 DOMAIN-SUFFIX, nfscdict.com
 DOMAIN-SUFFIX, nfscofficial.com
 DOMAIN-SUFFIX, nfsworld.com
+DOMAIN-SUFFIX, nftstatic.com
 DOMAIN-SUFFIX, nftstorage.link
 DOMAIN-SUFFIX, nga.mil
 DOMAIN-SUFFIX, ngc.ac.uk
@@ -26706,6 +26713,7 @@ DOMAIN-SUFFIX, tracker.network
 DOMAIN-SUFFIX, tracking-location.com
 DOMAIN-SUFFIX, tradevip1.com
 DOMAIN-SUFFIX, tradingview.com
+DOMAIN-SUFFIX, trae.ai
 DOMAIN-SUFFIX, traffcoll.ac.uk
 DOMAIN-SUFFIX, trafficmanager.net
 DOMAIN-SUFFIX, trafford.ac.uk
@@ -31040,6 +31048,7 @@ DOMAIN, gamedownloads-rockstargames-com.akamaized.net
 DOMAIN, gamer-cds.cdn.hinet.net
 DOMAIN, gamer2-cds.cdn.hinet.net
 DOMAIN, gigabyte2.azureedge.net
+DOMAIN, github-api.arkoselabs.com
 DOMAIN, github-cloud.s3.amazonaws.com
 DOMAIN, gitlab-assets.oss-cn-hongkong.aliyuncs.com
 DOMAIN, google-ohttp-relay-safebrowsing.fastly-edge.com
@@ -31257,6 +31266,7 @@ DOMAIN, statics-marketingsites-eus-ms-com.akamaized.net
 DOMAIN, statics-marketingsites-wcus-ms-com.akamaized.net
 DOMAIN, steambroadcast.akamaized.net
 DOMAIN, steamcdn-a.akamaihd.net
+DOMAIN, steamcloudsweden.blob.core.windows.net
 DOMAIN, steamcommunity-a.akamaihd.net
 DOMAIN, steamcommunity-a.akamaihd.net.edgesuite.net
 DOMAIN, steammobile.akamaized.net
@@ -31447,6 +31457,7 @@ DOMAIN, wwis-dubc1-vip98.adobe.com
 DOMAIN, wwis-dubc1-vip99.adobe.com
 DOMAIN, www-cdn.icloud.com.akadns.net
 DOMAIN, yangzhi.app
+DOMAIN, yt3.googleusercontent.com
 DOMAIN, zeenews-fonts.s3.amazonaws.com
 DOMAIN, ztedevices.com
 URL-REGEX, "(^|\.)13mei[5-7]\.buzz$"
@@ -31591,6 +31602,7 @@ URL-REGEX, "(^|\.)[a-z]?fulibl\.(cc|com|org|net|xyz)$"
 URL-REGEX, "(^|\.)[a-z][1-9][0-9][a-z]\.com$"
 URL-REGEX, ".+\.awsdns-[0-9][0-9]\.(co\.uk|com|net|org)$"
 URL-REGEX, ".+\.dkr\.ecr\.[^\.]+\.amazonaws\.com$"
+URL-REGEX, "javdb\d+\.com$"
 URL-REGEX, "^chatgpt-async-webps-prod-\S+-\d+\.webpubsub\.azure\.com$"
 URL-REGEX, "^epicgames-download\d\.akamaized\.net$"
 URL-REGEX, "^ewcdn[0-9]+\.nowe\.com$"

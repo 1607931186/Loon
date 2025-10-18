@@ -2,14 +2,14 @@
 # NAME: Global
 # AUTHOR: blackmatrix7
 # REPO: https://github.com/blackmatrix7/ios_rule_script
-# UPDATED: 2025-10-14 02:08:04
+# UPDATED: 2025-10-18 02:08:08
 # DOMAIN: 110
 # DOMAIN-KEYWORD: 36
-# DOMAIN-SUFFIX: 31853
+# DOMAIN-SUFFIX: 31857
 # IP-CIDR: 112
 # IP-CIDR6: 4
 # USER-AGENT: 46
-# TOTAL: 32161
+# TOTAL: 32165
 DOMAIN-SUFFIX,000webhost.com
 DOMAIN-SUFFIX,01.org
 DOMAIN-SUFFIX,02weqj32.com
@@ -2496,6 +2496,7 @@ DOMAIN-SUFFIX,asianboygay.com
 DOMAIN-SUFFIX,asiancamgirllive.com
 DOMAIN-SUFFIX,asiancamly.com
 DOMAIN-SUFFIX,asianews.it
+DOMAIN-SUFFIX,asianfanfics.com
 DOMAIN-SUFFIX,asianfreeforum.com
 DOMAIN-SUFFIX,asianfreeporn.net
 DOMAIN-SUFFIX,asiangfvideos.com
@@ -29784,6 +29785,7 @@ DOMAIN-SUFFIX,webpkgcache.com
 DOMAIN-SUFFIX,webrtc.org
 DOMAIN-SUFFIX,webrush.net
 DOMAIN-SUFFIX,webs-tv.net
+DOMAIN-SUFFIX,websdr.org
 DOMAIN-SUFFIX,website.new
 DOMAIN-SUFFIX,websitepulse.com
 DOMAIN-SUFFIX,websnapr.com
@@ -30648,6 +30650,7 @@ DOMAIN-SUFFIX,xn--r8jwklh769hk43amcfoyl3z3a.com
 DOMAIN-SUFFIX,xn--ruq8a011kt6y.xn--hxt814e
 DOMAIN-SUFFIX,xn--sjqr38j.com
 DOMAIN-SUFFIX,xn--tkry91n.com
+DOMAIN-SUFFIX,xn--u2u927b.com
 DOMAIN-SUFFIX,xn--ubt498knmf.com
 DOMAIN-SUFFIX,xn--uis17aj9kmuf.com
 DOMAIN-SUFFIX,xn--urs05q.jp
@@ -31637,6 +31640,7 @@ DOMAIN-SUFFIX,z-lib.gd
 DOMAIN-SUFFIX,z-lib.gl
 DOMAIN-SUFFIX,z-lib.io
 DOMAIN-SUFFIX,z-lib.org
+DOMAIN-SUFFIX,z-library.ec
 DOMAIN-SUFFIX,z-library.se
 DOMAIN-SUFFIX,z-library.sk
 DOMAIN-SUFFIX,z00.world
