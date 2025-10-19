@@ -17,51 +17,262 @@ const REGIONS_KEY = 'AppStore_Region';
 // 存储所有被监控 App 详细信息的键名
 const MONITORED_APPS_KEY = 'AppStore_Monitored_Apps';
 
-// --- 主程序 ---
-main();
+// --- 工具函数 ---
+function extractAppIds(rawArg) {
+  if (!rawArg) return [];
+  let rawStr = String(rawArg).trim();
+  if (!rawStr) return [];
+  const items = rawStr
+    .split(/[\s,;，\n\r]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+  const ids = items.filter(id => {
+    if (!/^\d+$/.test(id)) return false;
+    if (id.length > 1 && id[0] === '0') return false;
+    return true;
+  });
+  return [...new Set(ids)];
+}
 
+function extractRegions(rawArg) {
+  if (!rawArg) return [];
+  let rawStr = String(rawArg).trim();
+  if (!rawStr) return [];
+  return rawStr
+    .split(/[\s,;，\n\r]+/)
+    .map(r => r.trim().toLowerCase())
+    .filter(r => /^[a-z]{2}$/.test(r));
+}
+
+function lookupApp(region, appId) {
+  return new Promise(resolve => {
+    const url = region
+      ? `https://itunes.apple.com/${region}/lookup?id=${appId}`
+      : `https://itunes.apple.com/lookup?id=${appId}`;
+
+    const headers = {
+      'User-Agent':
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+    };
+
+    $httpClient.get({ url, headers }, (error, response, data) => {
+      if (error || response?.status !== 200) {
+        return resolve(null);
+      }
+      try {
+        const json = JSON.parse(data);
+        resolve(json.resultCount > 0 ? json.results[0] : null);
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  });
+}
+
+function compareVersions(v1, v2) {
+  try {
+    const parse = v => {
+      v = String(v).trim();
+      let main = v;
+      let build = 0;
+      const m = v.match(/^(.+?)\s*\((\d+)\)$/);
+      if (m) {
+        main = m[1].trim();
+        build = parseInt(m[2], 10) || 0;
+      }
+      const parts = main
+        .split('.')
+        .map(p => {
+          const n = parseInt(p, 10);
+          return isNaN(n) ? 0 : n;
+        });
+      return { parts, build };
+    };
+
+    const a = parse(v1);
+    const b = parse(v2);
+
+    const len = Math.max(a.parts.length, b.parts.length);
+    for (let i = 0; i < len; i++) {
+      const x = a.parts[i] || 0;
+      const y = b.parts[i] || 0;
+      if (x > y) return 1;
+      if (x < y) return -1;
+    }
+
+    if (a.build > b.build) return 1;
+    if (a.build < b.build) return -1;
+    return 0;
+  } catch (e) {
+    return v1 === v2 ? 0 : v1 > v2 ? 1 : -1;
+  }
+}
+
+function handleDeletions(newIds, monitoredData) {
+  const oldIds = Object.keys(monitoredData);
+  const deletedIds = oldIds.filter(id => !newIds.includes(id));
+
+  if (deletedIds.length > 0) {
+    console.log('----- 移除监控 -----');
+    deletedIds.forEach(id => {
+      const appName = monitoredData[id].name || `ID: ${id}`;
+      console.log(`[${appName}] (ID: ${id})`);
+      delete monitoredData[id];
+    });
+    console.log('------------------\n');
+  }
+}
+
+async function checkAppUpdate(appId, monitoredData, regions, logs) {
+  let appInfo = null;
+  let regionUsed = '';
+
+  const searchOrder = ['', ...regions];
+  for (const region of searchOrder) {
+    appInfo = await lookupApp(region, appId);
+    if (appInfo) {
+      regionUsed = region || 'global';
+      break;
+    }
+  }
+
+  if (!appInfo) {
+    const message = `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查 App ID 是否正确或尝试添加新区域。`;
+    logs.notFound.push(`${message}`);
+    $notification.post(
+      `App ID [${appId}] 未找到`,
+      '',
+      message
+    );
+    return;
+  }
+
+  const appName = appInfo.trackName;
+  const newVersion = appInfo.version;
+  const releaseNotes = appInfo.releaseNotes || '暂无更新说明';
+  const updateDate = appInfo.currentVersionReleaseDate;
+  const storedVersion = monitoredData[appId]?.version || null;
+
+  if (!storedVersion) {
+    logs.initial.push(
+      `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 初始化监控，版本 ${newVersion}。`
+    );
+  } else {
+    const cmp = compareVersions(newVersion, storedVersion);
+    if (cmp > 0) {
+      logs.updated.push(
+        `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 有更新，版本变动 ${storedVersion} → ${newVersion}。`
+      );
+    } else if (cmp < 0) {
+      logs.noUpdate.push(
+        `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 当前版本 (${newVersion}) 低于已记录版本 (${storedVersion})，可能区域变更。`
+      );
+    } else {
+      logs.noUpdate.push(
+        `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 已是最新版本 (${newVersion})，无需更新。`
+      );
+    }
+  }
+
+  if (!storedVersion || compareVersions(newVersion, storedVersion) > 0) {
+    monitoredData[appId] = {
+      version: newVersion,
+      region: regionUsed === 'global' ? '' : regionUsed,
+      name: appName,
+    };
+
+    const formattedDate = new Date(updateDate)
+      .toLocaleString('zh-CN', {
+        hour12: false,
+        timeZone: 'Asia/Shanghai',
+      })
+      .replace(/\//g, '-');
+
+    let title, subtitle, body;
+    if (storedVersion) {
+      title = `「${appName}」有更新啦！`;
+      subtitle = `区域：${regionUsed.toUpperCase()}　版本：${storedVersion} → ${newVersion}`;
+      body = `更新时间：${formattedDate}\n更新内容：\n${releaseNotes}`;
+    } else {
+      title = `「${appName}」已添加监控`;
+      subtitle = `区域：${regionUsed.toUpperCase()}　版本：${newVersion}`;
+      body = `更新时间：${formattedDate}\n将从此版本开始监控更新。`;
+    }
+
+    $notification.post(title, subtitle, body);
+  } else if (!monitoredData[appId]) {
+    monitoredData[appId] = {
+      version: newVersion,
+      region: regionUsed === 'global' ? '' : regionUsed,
+      name: appName,
+    };
+  }
+}
+
+// --- 主程序 ---
 async function main() {
+  // --- 1. 无条件解析并写入 argument---
+  let rawAppIdsStr = "";
+  let rawRegionsStr = "";
+
+  if (typeof $argument !== "undefined" && $argument) {
+    if (typeof $argument === 'object') {
+      rawAppIdsStr = String($argument.app_ids || "");
+      rawRegionsStr = String($argument.regions || "");
+    } else if (typeof $argument === 'string') {
+      rawAppIdsStr = $argument;
+    }
+  }
+
+  const appIdsToWrite = extractAppIds(rawAppIdsStr).join(',');
+  $persistentStore.write(appIdsToWrite, APP_IDS_KEY);
+
+  const regionsToWrite = extractRegions(rawRegionsStr).join(',');
+  $persistentStore.write(regionsToWrite, REGIONS_KEY);
+
+  // --- 2. 从持久化读取最终配置 ---
   const appStoreIds = $persistentStore.read(APP_IDS_KEY);
+  const newIds = appStoreIds
+    ? appStoreIds.split(',').map(id => id.trim()).filter(Boolean)
+    : [];
+
   const storedData = $persistentStore.read(MONITORED_APPS_KEY);
 
-  // 检查是否为首次使用且未配置
+  // --- 3. 未配置处理（首次使用）---
   if (!appStoreIds && (!storedData || storedData === '{}' || storedData === '')) {
-    const message = `未配置 AppStore AppID，请在本地持久化配置中写入键名 ${APP_IDS_KEY}。`;
+    const message = `未配置 AppStore AppID，请在插件 Argument 中传入纯数字 App ID（如：6448311845）。`;
     console.log(message);
     $notification.post('App Store 监控未配置', '', message);
     $done();
     return;
   }
 
-  // 处理已配置但清空 AppID 的情况
-  const newIds = appStoreIds ? appStoreIds.split(',').map(id => id.trim()).filter(Boolean) : [];
+  // --- 4. 清空逻辑 ---
   if (newIds.length === 0) {
     if (storedData && storedData !== '{}' && storedData !== '') {
-      console.log('AppStore AppID 列表为空，正在清理所有监控记录...');
+      console.log('AppID 列表为空，正在清理所有监控记录...');
       $persistentStore.write('', MONITORED_APPS_KEY);
-      console.log('AppStore AppID 清理完成。');
+      console.log('所有监控记录已清除。');
     } else {
-      console.log('AppStore AppID 列表为空，无需操作。');
+      console.log('AppID 列表为空，且无历史记录，无需操作。');
     }
     $done();
     return;
   }
 
-  // 读取已监控的应用数据
+  // --- 5. 加载监控数据 ---
   let monitoredData = {};
   if (storedData) {
     try {
       monitoredData = JSON.parse(storedData);
     } catch (e) {
-      console.log('解析已监控应用数据失败，将重置数据。');
       monitoredData = {};
     }
   }
 
-  // 1. 处理已删除的应用
   handleDeletions(newIds, monitoredData);
 
-  // 2. 检查应用更新
+  // --- 6. 加载区域 ---
   const defaultRegions = ['us', 'ca', 'jp', 'kr', 'sg', 'hk', 'mo', 'tw', 'tr', 'cn'];
   let regions = defaultRegions;
   const customRegionsRaw = $persistentStore.read(REGIONS_KEY);
@@ -83,12 +294,7 @@ async function main() {
   );
   console.log(`开始检测 ${newIds.length} 个应用更新...`);
 
-  const logs = {
-    initial: [],
-    updated: [],
-    noUpdate: [],
-    notFound: [],
-  };
+  const logs = { initial: [], updated: [], noUpdate: [], notFound: [] };
 
   try {
     await Promise.all(
@@ -126,177 +332,7 @@ async function main() {
   }
 }
 
-function handleDeletions(newIds, monitoredData) {
-  const oldIds = Object.keys(monitoredData);
-  const deletedIds = oldIds.filter(id => !newIds.includes(id));
-
-  if (deletedIds.length > 0) {
-    console.log('----- 应用列表变更 -----');
-    deletedIds.forEach(id => {
-      const appName = monitoredData[id].name || `ID: ${id}`;
-      console.log(`[${appName}] 已从监控列表移除。`);
-      delete monitoredData[id];
-    });
-    console.log('--------------------\n');
-  }
-}
-
-async function checkAppUpdate(appId, monitoredData, regions, logs) {
-  let appInfo = null;
-  let regionUsed = '';
-
-  // 先尝试无区域（global），再按 regions 顺序尝试
-  const searchOrder = ['', ...regions];
-
-  for (const region of searchOrder) {
-    appInfo = await lookupApp(region, appId);
-    if (appInfo) {
-      regionUsed = region || 'global';
-      break;
-    }
-  }
-
-  if (!appInfo) {
-    logs.notFound.push(
-      `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查AppID是否错误或者请添加新的区域。`
-    );
-    return;
-  }
-
-  const appName = appInfo.trackName;
-  const newVersion = appInfo.version;
-  const releaseNotes = appInfo.releaseNotes || '暂无更新说明';
-  const updateDate = appInfo.currentVersionReleaseDate;
-  const storedVersion = monitoredData[appId]?.version || null;
-
-  if (!storedVersion) {
-    logs.initial.push(
-      `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 初始化监控，版本 ${newVersion}。`
-    );
-  } else {
-    const cmp = compareVersions(newVersion, storedVersion);
-    if (cmp > 0) {
-      logs.updated.push(
-        `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 有更新，版本变动 ${storedVersion} → ${newVersion}。`
-      );
-    } else if (cmp < 0) {
-      logs.noUpdate.push(
-        `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 当前版本 (${newVersion}) 低于已记录版本 (${storedVersion})，可能区域变更。`
-      );
-    } else {
-      logs.noUpdate.push(
-        `[${regionUsed.toUpperCase()}] ${appName} (ID: ${appId}) 已是最新版本 (${newVersion})，无需更新。`
-      );
-    }
-  }
-
-  // 仅当首次监控 或 新版本 > 旧版本 时推送并更新
-  if (!storedVersion || compareVersions(newVersion, storedVersion) > 0) {
-    monitoredData[appId] = {
-      version: newVersion,
-      region: regionUsed === 'global' ? '' : regionUsed,
-      name: appName,
-    };
-
-    const formattedDate = new Date(updateDate)
-      .toLocaleString('zh-CN', {
-        hour12: false,
-        timeZone: 'Asia/Shanghai',
-      })
-      .replace(/\//g, '-');
-
-    const openUrl = regionUsed === 'global'
-      ? `itms-apps://itunes.apple.com/app/id${appId}`
-      : `itms-apps://itunes.apple.com/${regionUsed}/app/id${appId}`;
-
-    let title, subtitle, body;
-
-    if (storedVersion) {
-      title = `「${appName}」有更新啦！`;
-      subtitle = `区域：${regionUsed.toUpperCase()}　版本：${storedVersion} → ${newVersion}`;
-      body = `更新时间：${formattedDate}\n更新内容：\n${releaseNotes}`;
-    } else {
-      title = `「${appName}」已添加监控`;
-      subtitle = `区域：${regionUsed.toUpperCase()}　版本：${newVersion}`;
-      body = `更新时间：${formattedDate}\n将从此版本开始监控更新。`;
-    }
-
-    $notification.post(title, subtitle, body, { openUrl });
-  } else if (!monitoredData[appId]) {
-    // 兜底：确保新 App 被记录
-    monitoredData[appId] = {
-      version: newVersion,
-      region: regionUsed === 'global' ? '' : regionUsed,
-      name: appName,
-    };
-  }
-}
-
-function lookupApp(region, appId) {
-  return new Promise(resolve => {
-    const url = region
-      ? `https://itunes.apple.com/${region}/lookup?id=${appId}`
-      : `https://itunes.apple.com/lookup?id=${appId}`;
-
-    const headers = {
-      'User-Agent':
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
-    };
-
-    $httpClient.get({ url, headers }, (error, response, data) => {
-      if (error || response?.status !== 200) {
-        return resolve(null);
-      }
-      try {
-        const json = JSON.parse(data);
-        resolve(json.resultCount > 0 ? json.results[0] : null);
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  });
-}
-
-/**
- * 比较版本，支持 x.y.z 和 x.y.z(nn) 格式
- * 例如：6.8(12) → 主版本 [6,8]，build=12
- */
-function compareVersions(v1, v2) {
-  try {
-    const parse = v => {
-      v = String(v).trim();
-      let main = v;
-      let build = 0;
-      const m = v.match(/^(.+?)\s*\((\d+)\)$/);
-      if (m) {
-        main = m[1].trim();
-        build = parseInt(m[2], 10) || 0;
-      }
-      const parts = main
-        .split('.')
-        .map(p => {
-          const n = parseInt(p, 10);
-          return isNaN(n) ? 0 : n;
-        });
-      return { parts, build };
-    };
-
-    const a = parse(v1);
-    const b = parse(v2);
-
-    const len = Math.max(a.parts.length, b.parts.length);
-    for (let i = 0; i < len; i++) {
-      const x = a.parts[i] || 0;
-      const y = b.parts[i] || 0;
-      if (x > y) return 1;
-      if (x < y) return -1;
-    }
-
-    if (a.build > b.build) return 1;
-    if (a.build < b.build) return -1;
-    return 0;
-  } catch (e) {
-    // 安全回退
-    return v1 === v2 ? 0 : v1 > v2 ? 1 : -1;
-  }
-}
+main().catch(err => {
+  console.error(`致命错误: ${err}`);
+  $done();
+});
