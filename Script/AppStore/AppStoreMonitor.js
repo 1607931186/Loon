@@ -17,6 +17,9 @@ const REGIONS_KEY = 'AppStore_Region';
 // 存储所有被监控 App 详细信息的键名
 const MONITORED_APPS_KEY = 'AppStore_Monitored_Apps';
 
+// --- App Store 系统通知图标（用于“未找到”和“未配置”）---
+const APP_STORE_ICON_URL = "https://raw.githubusercontent.com/sooyaaabo/Loon/main/Icon/App-Icon/AppStore-01.png";
+
 // --- 工具函数 ---
 function extractAppIds(rawArg) {
   if (!rawArg) return [];
@@ -123,7 +126,7 @@ function handleDeletions(newIds, monitoredData) {
   }
 }
 
-async function checkAppUpdate(appId, monitoredData, regions, logs) {
+async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey) {
   let appInfo = null;
   let regionUsed = '';
 
@@ -139,11 +142,20 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
   if (!appInfo) {
     const message = `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查 App ID 是否正确或尝试添加新区域。`;
     logs.notFound.push(`${message}`);
-    $notification.post(
-      `App ID [${appId}] 未找到`,
-      '',
-      message
-    );
+
+    if (barkKey) {
+      $httpClient.post({
+        url: `https://api.day.app/${barkKey}/`,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          title: `App ID [${appId}] 未找到`,
+          body: message,
+          icon: APP_STORE_ICON_URL
+        })
+      }, () => {});
+    } else {
+      $notification.post(`App ID [${appId}] 未找到`, '', message);
+    }
     return;
   }
 
@@ -199,7 +211,29 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
       body = `更新时间：${formattedDate}\n将从此版本开始监控更新。`;
     }
 
-    $notification.post(title, subtitle, body);
+    // 发送通知：支持 Bark 或 Loon
+    if (barkKey) {
+      let iconUrl = null;
+      if (appInfo.artworkUrl100) {
+        iconUrl = appInfo.artworkUrl100.replace(/\/\d+x\d+bb\.jpg$/, '/512x512bb.jpg');
+      }
+
+      const payload = {
+        title: title,
+        body: body,
+        subtitle: subtitle,
+        url: `itms-apps://itunes.apple.com/app/id${appId}`,
+        ...(iconUrl ? { icon: iconUrl } : {})
+      };
+
+      $httpClient.post({
+        url: `https://api.day.app/${barkKey}/`,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify(payload)
+      }, () => {});
+    } else {
+      $notification.post(title, subtitle, body, `itms-apps://itunes.apple.com/app/id${appId}`);
+    }
   } else if (!monitoredData[appId]) {
     monitoredData[appId] = {
       version: newVersion,
@@ -211,26 +245,29 @@ async function checkAppUpdate(appId, monitoredData, regions, logs) {
 
 // --- 主程序 ---
 async function main() {
-  // --- 1. 无条件解析并写入 argument---
+  // --- 1. 解析 argument ---
   let rawAppIdsStr = "";
   let rawRegionsStr = "";
+  let barkKey = "";
 
   if (typeof $argument !== "undefined" && $argument) {
     if (typeof $argument === 'object') {
       rawAppIdsStr = String($argument.app_ids || "");
       rawRegionsStr = String($argument.regions || "");
+      barkKey = String($argument.bark_key || "").trim();
     } else if (typeof $argument === 'string') {
       rawAppIdsStr = $argument;
     }
   }
 
+  // 写入持久化（AppID 和 Regions）
   const appIdsToWrite = extractAppIds(rawAppIdsStr).join(',');
   $persistentStore.write(appIdsToWrite, APP_IDS_KEY);
 
   const regionsToWrite = extractRegions(rawRegionsStr).join(',');
   $persistentStore.write(regionsToWrite, REGIONS_KEY);
 
-  // --- 2. 从持久化读取最终配置 ---
+  // --- 2. 读取配置 ---
   const appStoreIds = $persistentStore.read(APP_IDS_KEY);
   const newIds = appStoreIds
     ? appStoreIds.split(',').map(id => id.trim()).filter(Boolean)
@@ -238,11 +275,25 @@ async function main() {
 
   const storedData = $persistentStore.read(MONITORED_APPS_KEY);
 
-  // --- 3. 未配置处理（首次使用）---
+  // --- 3. 未配置处理 ---
   if (!appStoreIds && (!storedData || storedData === '{}' || storedData === '')) {
-    const message = `未配置 AppStore AppID，请在插件 Argument 中传入纯数字 App ID（如：6448311845）。`;
+    const message = `未配置 AppStore AppID，请在插件 Argument 中传入 App ID。`;
     console.log(message);
-    $notification.post('App Store 监控未配置', '', message);
+
+    if (barkKey) {
+      $httpClient.post({
+        url: `https://api.day.app/${barkKey}/`,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          title: 'App Store 监控未配置',
+          body: message,
+          icon: APP_STORE_ICON_URL
+        })
+      }, () => {});
+    } else {
+      $notification.post('App Store 监控未配置', '', message);
+    }
+
     $done();
     return;
   }
@@ -298,7 +349,7 @@ async function main() {
 
   try {
     await Promise.all(
-      newIds.map(id => checkAppUpdate(id, monitoredData, regions, logs))
+      newIds.map(id => checkAppUpdate(id, monitoredData, regions, logs, barkKey))
     );
 
     console.log('');
