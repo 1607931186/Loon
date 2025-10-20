@@ -6,7 +6,7 @@
  */
 
 // --- 配置键 ---
-// 存储 App ID 列表的键名
+// 存储 AppID 列表的键名
 // 示例：444934666,414478124,930368978
 const APP_IDS_KEY = 'AppStore_AppID';
 
@@ -140,7 +140,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey) {
   }
 
   if (!appInfo) {
-    const message = `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查 App ID 是否正确或尝试添加新区域。`;
+    const message = `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查 AppID 是否正确或尝试添加新区域。`;
     logs.notFound.push(`${message}`);
 
     if (barkKey) {
@@ -148,13 +148,13 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey) {
         url: `https://api.day.app/${barkKey}/`,
         headers: { 'Content-Type': 'application/json; charset=utf-8' },
         body: JSON.stringify({
-          title: `App ID [${appId}] 未找到`,
+          title: `AppID [${appId}] 未找到`,
           body: message,
           icon: APP_STORE_ICON_URL
         })
       }, () => {});
     } else {
-      $notification.post(`App ID [${appId}] 未找到`, '', message);
+      $notification.post(`AppID [${appId}] 未找到`, '', message);
     }
     return;
   }
@@ -277,7 +277,7 @@ async function main() {
 
   // --- 3. 未配置处理 ---
   if (!appStoreIds && (!storedData || storedData === '{}' || storedData === '')) {
-    const message = `未配置 AppStore AppID，请在插件 Argument 中传入 App ID。`;
+    const message = `未配置 AppStore AppID，请在插件 Argument 中传入 AppID。`;
     console.log(message);
 
     if (barkKey) {
