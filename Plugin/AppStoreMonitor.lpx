@@ -1,5 +1,5 @@
 #!name = AppStore Monitor
-#!desc = 定时监控App Store内App的更新状态\n可输入多个AppID，可自定义查询区域顺序（不填则为默认顺序），均以逗号分隔。
+#!desc = 定时监控App Store内App的更新状态\n可输入多个AppID，可自定义查询区域顺序（不填则为默认顺序），均以逗号分隔。\n可填入Bark Key使用Bark推送通知，若不填则默认使用Loon推送通知。
 #!author = sooyaaabo[https://github.com/sooyaaabo]
 #!tag = 功能增强
 #!system = 
