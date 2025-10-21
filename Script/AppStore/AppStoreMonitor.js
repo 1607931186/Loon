@@ -264,6 +264,11 @@ async function main() {
     }
   }
 
+  // 如果传入值为 "system"，则视为空，使用 Bark 默认铃声
+  if (barkSound === 'system') {
+    barkSound = '';
+  }
+
   // 写入持久化（AppID 和 Regions）
   const appIdsToWrite = extractAppIds(rawAppIdsStr).join(',');
   $persistentStore.write(appIdsToWrite, APP_IDS_KEY);
