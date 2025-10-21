@@ -126,7 +126,7 @@ function handleDeletions(newIds, monitoredData) {
   }
 }
 
-async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey) {
+async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, barkSound) {
   let appInfo = null;
   let regionUsed = '';
 
@@ -150,7 +150,8 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey) {
         body: JSON.stringify({
           title: `AppID [${appId}] 未找到`,
           body: message,
-          icon: APP_STORE_ICON_URL
+          icon: APP_STORE_ICON_URL,
+          ...(barkSound ? { sound: barkSound } : {})
         })
       }, () => {});
     } else {
@@ -223,7 +224,8 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey) {
         body: body,
         subtitle: subtitle,
         url: `itms-apps://itunes.apple.com/app/id${appId}`,
-        ...(iconUrl ? { icon: iconUrl } : {})
+        ...(iconUrl ? { icon: iconUrl } : {}),
+        ...(barkSound ? { sound: barkSound } : {})
       };
 
       $httpClient.post({
@@ -249,15 +251,22 @@ async function main() {
   let rawAppIdsStr = "";
   let rawRegionsStr = "";
   let barkKey = "";
+  let barkSound = "";
 
   if (typeof $argument !== "undefined" && $argument) {
     if (typeof $argument === 'object') {
       rawAppIdsStr = String($argument.app_ids || "");
       rawRegionsStr = String($argument.regions || "");
       barkKey = String($argument.bark_key || "").trim();
+      barkSound = String($argument.bark_sound || "").trim();
     } else if (typeof $argument === 'string') {
       rawAppIdsStr = $argument;
     }
+  }
+
+  // 如果传入值为 "system"，则视为空，使用 Bark 默认铃声
+  if (barkSound === 'system') {
+    barkSound = '';
   }
 
   // 写入持久化（AppID 和 Regions）
@@ -287,7 +296,8 @@ async function main() {
         body: JSON.stringify({
           title: 'App Store 监控未配置',
           body: message,
-          icon: APP_STORE_ICON_URL
+          icon: APP_STORE_ICON_URL,
+          ...(barkSound ? { sound: barkSound } : {})
         })
       }, () => {});
     } else {
@@ -349,7 +359,7 @@ async function main() {
 
   try {
     await Promise.all(
-      newIds.map(id => checkAppUpdate(id, monitoredData, regions, logs, barkKey))
+      newIds.map(id => checkAppUpdate(id, monitoredData, regions, logs, barkKey, barkSound))
     );
 
     console.log('');
