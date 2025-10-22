@@ -1,5 +1,5 @@
 #!name = 微博轻享版
-#!desc = 过滤微博轻享版广告，需禁用[微博]插件和[微博轻享版]插件，以避免本插件不生效。
+#!desc = 过滤微博轻享版广告
 #!openUrl = https://apps.apple.com/app/id1215210046
 #!author = Keywos[https://github.com/Keywos], kokoryh[https://github.com/kokoryh], 可莉🅥[https://github.com/luestr/ProxyResource/blob/main/README.md]
 #!tag = 去广告
