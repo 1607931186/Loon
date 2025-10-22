@@ -49,9 +49,7 @@ function extractRegions(rawArg) {
 
 function lookupApp(region, appId) {
   return new Promise(resolve => {
-    const url = region
-      ? `https://itunes.apple.com/${region}/lookup?id=${appId}`
-      : `https://itunes.apple.com/lookup?id=${appId}`;
+    const url = `https://itunes.apple.com/${region}/lookup?id=${appId}`;
 
     const headers = {
       'User-Agent':
@@ -130,17 +128,17 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, bark
   let appInfo = null;
   let regionUsed = '';
 
-  const searchOrder = ['', ...regions];
+  const searchOrder = regions;
   for (const region of searchOrder) {
     appInfo = await lookupApp(region, appId);
     if (appInfo) {
-      regionUsed = region || 'global';
+      regionUsed = region;
       break;
     }
   }
 
   if (!appInfo) {
-    const message = `[${appId}] 在 GLOBAL 及 ${regions.join(', ').toUpperCase()} 均未找到，请检查 AppID 是否正确或尝试添加新区域。`;
+    const message = `[${appId}] 在 ${regions.join(', ').toUpperCase()} 均未找到，请检查 AppID 是否正确或尝试添加新区域。`;
     logs.notFound.push(`${message}`);
 
     if (barkKey) {
@@ -351,7 +349,7 @@ async function main() {
   }
 
   console.log(
-    `查询区域顺序: GLOBAL→${regions.join('→').toUpperCase()}${usingCustomRegions ? ' (自定义)' : ' (默认)'}`
+    `查询区域顺序: ${regions.join('→').toUpperCase()}${usingCustomRegions ? ' (自定义)' : ' (默认)'}`
   );
   console.log(`开始检测 ${newIds.length} 个应用更新...`);
 
