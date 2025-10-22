@@ -8,9 +8,9 @@
 #!loon_version = 3.3.5(904)
 #!homepage = https://github.com/sooyaaabo/Loon/blob/main/README.md
 #!icon = https://raw.githubusercontent.com/sooyaaabo/Loon/main/Icon/App-Icon/Pinduoduo.png
-#!date = 2025-10-16 00:00
+#!date = 2025-10-22 18:00
 
-# 2025-09-13
+# 2025-10-22
 # https://raw.githubusercontent.com/ZenmoFeiShi/Qx/main/Pinduoduo.snippet
 # 2024-08-10
 # https://raw.githubusercontent.com/ZenmoFeiShi/rule/main/Pinduoduo.list
@@ -59,6 +59,7 @@ IP-CIDR, 101.35.212.35/32, REJECT
 ^https:\/\/api\.pinduoduo\.com\/api\/flow\/hungary\/window\/global\/v2\? reject-dict
 ^https:\/\/api\.pinduoduo\.com\/api\/oak\/integration\/render response-body-json-del bottom_section_list ui.bottom_section ui.live_section.float_info
 ^https:\/\/api\.pinduoduo\.com\/search response-body-json-del expansion
+^https:\/\/api\.pinduoduo\.com\/api\/caterham\/v3\/query\/order_detail_group response-body-json-del goods_list
 
 # 开屏广告
 ^https:\/\/api\.(?:pinduoduo|yangkeduo)\.com\/api\/cappuccino\/splash\? reject-dict
