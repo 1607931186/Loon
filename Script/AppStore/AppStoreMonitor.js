@@ -44,28 +44,51 @@ function extractRegions(rawArg) {
   return rawStr
     .split(/[\s,;，\n\r]+/)
     .map(r => r.trim().toLowerCase())
-    .filter(r => /^[a-z]{2}$/.test(r));
+    .filter(r => /^[a-z]{2}$/);
 }
 
 function lookupApp(region, appId) {
   return new Promise(resolve => {
-    const url = `https://itunes.apple.com/${region}/lookup?id=${appId}`;
-
+    const baseUrl = `https://itunes.apple.com/${region}/lookup`;
     const headers = {
       'User-Agent':
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
     };
 
-    $httpClient.get({ url, headers }, (error, response, data) => {
-      if (error || response?.status !== 200) {
-        return resolve(null);
+    // === 第一步：尝试 POST 请求（推荐方式）===
+    const postHeaders = {
+      ...headers,
+      'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
+    };
+    const body = `id=${encodeURIComponent(appId)}`;
+
+    $httpClient.post({ url: baseUrl, headers: postHeaders, body }, (error, response, data) => {
+      if (!error && response?.status === 200) {
+        try {
+          const json = JSON.parse(data);
+          if (json.resultCount > 0) {
+            return resolve(json.results[0]);
+          }
+        } catch (e) {
+          // JSON 解析失败，视为 POST 无效，继续尝试 GET
+        }
       }
-      try {
-        const json = JSON.parse(data);
-        resolve(json.resultCount > 0 ? json.results[0] : null);
-      } catch (e) {
+
+      // === 第二步：POST 失败，回退到 GET 请求 ===
+      const getUrl = `${baseUrl}?id=${encodeURIComponent(appId)}`;
+      $httpClient.get({ url: getUrl, headers }, (getError, getResponse, getData) => {
+        if (!getError && getResponse?.status === 200) {
+          try {
+            const json = JSON.parse(getData);
+            resolve(json.resultCount > 0 ? json.results[0] : null);
+            return;
+          } catch (e) {
+            // 解析仍失败
+          }
+        }
+        // 所有尝试均失败
         resolve(null);
-      }
+      });
     });
   });
 }
