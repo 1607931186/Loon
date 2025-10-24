@@ -8,11 +8,11 @@
 #!loon_version = 3.3.5(904)
 #!homepage = https://github.com/sooyaaabo/Loon/blob/main/README.md
 #!icon = https://raw.githubusercontent.com/sooyaaabo/Loon/main/Icon/App-Icon/IThome.png
-#!date = 2025-10-16 00:00
+#!date = 2025-10-24 09:00
 
 # 2024-01-27 20:57:40
 # https://raw.githubusercontent.com/Keywos/rule/main/script/ithome/it.plugin
-# 2025-10-09 22:32:05
+# 2025-10-24 03:22:31
 # https://kelee.one/Tool/Loon/Lpx/IThome_remove_ads.lpx
 
 [Argument]
