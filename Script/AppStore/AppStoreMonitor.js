@@ -356,9 +356,9 @@ async function main() {
   const logs = { initial: [], updated: [], noUpdate: [], notFound: [] };
 
   try {
-    await Promise.all(
-      newIds.map(id => checkAppUpdate(id, monitoredData, regions, logs, barkKey, barkSound))
-    );
+    for (const id of newIds) {
+      await checkAppUpdate(id, monitoredData, regions, logs, barkKey, barkSound);
+    }
 
     console.log('');
     if (logs.initial.length > 0) {
