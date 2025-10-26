@@ -1,5 +1,5 @@
 # 影视播放规则(代理)
-# 2025-04-13 21:00
+# 2025-10-26 18:00
 
 # CMSPlayer
 # 海外看
@@ -84,7 +84,9 @@ DOMAIN, 041.bndmpsjx.com
 DOMAIN-SUFFIX, avdbapi.com
 # AV Today
 DOMAIN-SUFFIX, avtoday.io
-# Hanime1.me
+# EXPORNTOONS
+DOMAIN-SUFFIX, exporntoons.net
+# Hanime1
 DOMAIN-SUFFIX, hanime1.me
 # HoHoJ
 DOMAIN-SUFFIX, hohoj.tv
@@ -101,6 +103,8 @@ DOMAIN-SUFFIX, missav.ws
 DOMAIN-SUFFIX, pornhub.com
 # PPP Porn
 DOMAIN-SUFFIX, ppp.porn
+# SpankBang
+DOMAIN-SUFFIX, spankbang.com
 # SubJav
 DOMAIN-SUFFIX, supjav.com
 # xHamster

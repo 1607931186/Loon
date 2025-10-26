@@ -17,6 +17,9 @@ const REGIONS_KEY = 'AppStore_Region';
 // 存储所有被监控 App 详细信息的键名
 const MONITORED_APPS_KEY = 'AppStore_Monitored_Apps';
 
+// 并发数
+const CONCURRENCY = 5;
+
 // --- App Store 系统通知图标（用于“未找到”和“未配置”）---
 const APP_STORE_ICON_URL = "https://raw.githubusercontent.com/sooyaaabo/Loon/main/Icon/App-Icon/AppStore-01.png";
 
@@ -49,7 +52,7 @@ function extractRegions(rawArg) {
 
 function lookupApp(region, appId) {
   return new Promise(resolve => {
-    const url = `https://itunes.apple.com/${region}/lookup?id=${appId}`;
+    const url = `https://itunes.apple.com/${region}/lookup?id=${appId}&t=${Date.now()}`;
 
     const headers = {
       'User-Agent':
@@ -122,6 +125,24 @@ function handleDeletions(newIds, monitoredData) {
     });
     console.log('------------------\n');
   }
+}
+
+// --- 并发控制函数 ---
+async function runWithConcurrency(tasks, limit) {
+  const results = [];
+  const executing = [];
+  for (const task of tasks) {
+    const p = Promise.resolve().then(() => task());
+    results.push(p);
+    if (limit <= tasks.length) {
+      const e = p.then(() => executing.splice(executing.indexOf(e), 1));
+      executing.push(e);
+      if (executing.length >= limit) {
+        await Promise.race(executing);
+      }
+    }
+  }
+  return Promise.all(results);
 }
 
 async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, barkSound) {
@@ -202,7 +223,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, bark
     let title, subtitle, body;
     if (storedVersion) {
       title = `「${appName}」有更新啦！`;
-      subtitle = `区域：${regionUsed.toUpperCase()}　版本：${storedVersion} → ${newVersion}`;
+      subtitle = `版本：${storedVersion} → ${newVersion}`;
       body = `更新时间：${formattedDate}\n更新内容：\n${releaseNotes}`;
     } else {
       title = `「${appName}」已添加监控`;
@@ -268,25 +289,18 @@ async function main() {
   }
 
   // 写入持久化（AppID 和 Regions）
-  const appIdsToWrite = extractAppIds(rawAppIdsStr).join(',');
-  $persistentStore.write(appIdsToWrite, APP_IDS_KEY);
-
-  const regionsToWrite = extractRegions(rawRegionsStr).join(',');
-  $persistentStore.write(regionsToWrite, REGIONS_KEY);
+  $persistentStore.write(extractAppIds(rawAppIdsStr).join(','), APP_IDS_KEY);
+  $persistentStore.write(extractRegions(rawRegionsStr).join(','), REGIONS_KEY);
 
   // --- 2. 读取配置 ---
   const appStoreIds = $persistentStore.read(APP_IDS_KEY);
-  const newIds = appStoreIds
-    ? appStoreIds.split(',').map(id => id.trim()).filter(Boolean)
-    : [];
-
+  const newIds = appStoreIds ? appStoreIds.split(',').map(id => id.trim()).filter(Boolean) : [];
   const storedData = $persistentStore.read(MONITORED_APPS_KEY);
 
   // --- 3. 未配置处理 ---
   if (!appStoreIds && (!storedData || storedData === '{}' || storedData === '')) {
     const message = `未配置 AppStore AppID，请在插件 Argument 中传入 AppID。`;
     console.log(message);
-
     if (barkKey) {
       $httpClient.post({
         url: `https://api.day.app/${barkKey}/`,
@@ -301,7 +315,6 @@ async function main() {
     } else {
       $notification.post('App Store 监控未配置', '', message);
     }
-
     $done();
     return;
   }
@@ -338,27 +351,25 @@ async function main() {
   let usingCustomRegions = false;
 
   if (customRegionsRaw) {
-    const customRegions = customRegionsRaw
-      .split(',')
-      .map(r => r.trim().toLowerCase())
-      .filter(Boolean);
+    const customRegions = customRegionsRaw.split(',').map(r => r.trim().toLowerCase()).filter(Boolean);
     if (customRegions.length > 0) {
       regions = customRegions;
       usingCustomRegions = true;
     }
   }
 
-  console.log(
-    `查询区域顺序: ${regions.join('→').toUpperCase()}${usingCustomRegions ? ' (自定义)' : ' (默认)'}`
-  );
+  console.log(`查询区域顺序: ${regions.join('→').toUpperCase()}${usingCustomRegions ? ' (自定义)' : ' (默认)'}`);
   console.log(`开始检测 ${newIds.length} 个应用更新...`);
 
   const logs = { initial: [], updated: [], noUpdate: [], notFound: [] };
 
   try {
-    for (const id of newIds) {
-      await checkAppUpdate(id, monitoredData, regions, logs, barkKey, barkSound);
-    }
+    await runWithConcurrency(
+      newIds.map(id => async () => {
+        await checkAppUpdate(id, monitoredData, regions, logs, barkKey, barkSound);
+      }),
+      CONCURRENCY
+    );
 
     console.log('');
     if (logs.initial.length > 0) {
