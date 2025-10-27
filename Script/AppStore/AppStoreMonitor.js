@@ -179,7 +179,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, bark
     return;
   }
 
-  const appName = appInfo.trackName;
+  const appName = appInfo.trackName.split(/[-：:]/)[0].trim();
   const newVersion = appInfo.version;
   const releaseNotes = appInfo.releaseNotes || '暂无更新说明';
   const updateDate = appInfo.currentVersionReleaseDate;
