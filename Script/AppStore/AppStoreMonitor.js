@@ -181,11 +181,15 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, bark
   for (const region of regions) {
     let attempt = 0;
     let result = null;
-    while (attempt < 3) {
+    while (attempt < 2) {
       result = await lookupApp(region, appId);
-      if (result.status !== 'error') break;
+      if (result.status !== 'error') {
+        break;
+      }
       attempt++;
-      await new Promise(r => setTimeout(r, 1000 * attempt)); // 1s, 2s, 3s
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 500));
+      }
     }
 
     if (result.status === 'found') {
@@ -286,7 +290,7 @@ async function checkAppUpdate(appId, monitoredData, regions, logs, barkKey, bark
     return;
   }
 
-  // 全部 notfound，无 error → 确实不存在
+  // 全部 notfound，无 error
   if (notFoundRegions.length === regions.length && errorRegions.length === 0) {
     const message = `[${appId}] 在 ${regions.join(', ').toUpperCase()} 均未找到，请检查 AppID 是否正确或尝试添加新区域。`;
     logs.notFound.push(message);
