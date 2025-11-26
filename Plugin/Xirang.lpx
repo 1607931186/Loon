@@ -1,0 +1,12 @@
+#!name = 息壤阅读
+#!desc = 过滤息壤阅读广告
+#!tag = 去广告
+#!date = 2025-11-26 13:30
+
+[Rewrite]
+# 开屏广告
+^https:\/\/ios-api\.xrzww\.com\/api\/getOpenScreenAd$ reject
+
+
+[MitM]
+hostname = ios-api.xrzww.com
