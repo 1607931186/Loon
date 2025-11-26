@@ -1,6 +1,7 @@
 #!name = 息壤阅读
 #!desc = 过滤息壤阅读广告
 #!tag = 去广告
+#!icon = https://raw.githubusercontent.com/1607931186/Loon/refs/heads/main/Icon/App-Icon/Xirang.PNG
 #!date = 2025-11-26 13:30
 
 [Rewrite]
