@@ -31,6 +31,7 @@
 ^https:\/\/api\.zhihu\.com\/people\/homepage_entry_v\d$ - reject-dict
 ^https:\/\/api\.zhihu\.com\/kvip\/right\/my_card\? - reject-dict
 ^https:\/\/api\.zhihu\.com\/unlimited\/go\/my_card\/v\d\? - reject-dict
+^https?:\/\/www\.zhihu\.com\/api\/v4\/answers\/\d+\/recommendations(?:\?.*)?$ - reject-dict
 
 [MITM]
 hostname = m-cloud.zhihu.com, api.zhihu.com, www.zhihu.com, page-info.zhihu.com, zhida.zhihu.com
