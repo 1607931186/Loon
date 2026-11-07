@@ -1,5 +1,6 @@
-#!name = SideStore 本机回环
-#!desc = 将 10.7.0.1 的流量回送本机
+#!name = 本机回环
+#!desc = 将发往 10.7.0.1 的流量回送本机
+#!icon = https://raw.githubusercontent.com/1607931186/Loon/main/Icon/swipt-icon.png
 #!loon_version = 3.5.3(1007)
 
 [General]
